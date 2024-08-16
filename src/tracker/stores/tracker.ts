@@ -264,8 +264,13 @@ function createTracker() {
                             // Update the amount for an existing status, remove if <= 0
                             if (status.amount > 0) {
                                 creature.status.forEach((s) => {
-                                    s.amount = status.amount;
+                                    if (s.id == status.id) {
+                                        s.amount = status.amount;
+                                    }
                                 });
+                                _logger?.log(
+                                    `${creature.name} status ${status.name} set to ${status.amount}`
+                                );
                             } else {
                                 if (!Array.isArray(change.remove_status)) {
                                     change.remove_status = [];
@@ -485,8 +490,13 @@ function createTracker() {
                                     // Update the amount for an existing status, remove if <= 0
                                     if (status.amount > 0) {
                                         creature.status.forEach((s) => {
-                                            s.amount = status.amount;
+                                            if (s.id == status.id) {
+                                                s.amount = status.amount;
+                                            }
                                         });
+                                        _logger?.log(
+                                            `${creature.name} status ${status.name} set to ${status.amount}`
+                                        );
                                     } else {
                                         if (!Array.isArray(change.remove_status)) {
                                             change.remove_status = [];
@@ -1280,8 +1290,13 @@ class Tracker {
                             // Update the amount for an existing status, remove if <= 0
                             if (status.amount > 0) {
                                 creature.status.forEach((s) => {
-                                    s.amount = status.amount;
+                                    if (s.id == status.id) {
+                                        s.amount = status.amount;
+                                    }
                                 });
+                                _logger?.log(
+                                    `${creature.name} status ${status.name} set to ${status.amount}`
+                                );
                             } else {
                                 if (!Array.isArray(change.remove_status)) {
                                     change.remove_status = [];
