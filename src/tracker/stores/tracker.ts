@@ -604,7 +604,12 @@ function createTracker() {
                         }
                     }
                     if (statuses.length) {
-                        message.status = statuses.map((s) => s.name);
+                        message.status = statuses.map((s) => {
+                            if (s.hasAmount)
+                                return `${s.name} (${s.amount})`;
+
+                            return s.name;
+                        });
                         if (!entry.saved) {
                             change.status = statuses;
                         } else {
@@ -1395,7 +1400,12 @@ class Tracker {
                     }
                 }
                 if (statuses.length) {
-                    message.status = statuses.map((s) => s.name);
+                    message.status = statuses.map((s) => {
+                        if (s.hasAmount)
+                            return `${s.name} (${s.amount})`;;
+
+                        return s.name;
+                    });
                     if (!entry.saved) {
                         change.status = statuses;
                     } else {
