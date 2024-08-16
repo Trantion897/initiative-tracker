@@ -34,11 +34,18 @@
                 use:minus
                 on:click={() => {
                     status.amount--;
-                    if (status.amount <= 0) dispatch("remove");
+                    dispatch("update");
                 }}
             />
             <span>{status.amount}</span>
-            <div class="icon" use:plus on:click={() => status.amount++} />
+            <div
+                class="icon"
+                use:plus
+                on:click={() => {
+                    status.amount++;
+                    dispatch("update");
+                }}
+            />
         </div>
     {/if}
     <div use:deleteIcon on:click={() => dispatch("remove")} />

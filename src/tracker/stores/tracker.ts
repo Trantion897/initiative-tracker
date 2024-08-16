@@ -259,12 +259,40 @@ function createTracker() {
             }
             if (change.status?.length) {
                 for (const status of change.status) {
-                    creature.addCondition(status);
+                    if ([...creature.status].some((s) => s.id == status.id)) {
+                        if (status.hasAmount) {
+                            // Update the amount for an existing status, remove if <= 0
+                            if (status.amount > 0) {
+                                creature.status.forEach((s) => {
+                                    s.amount = status.amount;
+                                });
+                            } else {
+                                if (!Array.isArray(change.remove_status)) {
+                                    change.remove_status = [];
+                                }
+                                change.remove_status.push(status);
+                            }
+                        }
+                    } else {
+                        creature.addCondition(status);
+                    }
                 }
             }
             if (change.remove_status?.length) {
                 for (const status of change.remove_status) {
                     creature.removeCondition(status);
+                }
+            }
+            if (change.remove_status?.length) {
+                for (const status of change.remove_status) {
+                    creature.status = new Set(
+                        [...creature.status].filter(
+                            (s) => s.id != status.id
+                        )
+                    );
+                    _logger?.log(
+                        `${creature.name} relieved of status ${status.name}`
+                    );
                 }
             }
             if ("hidden" in change) {
@@ -452,7 +480,22 @@ function createTracker() {
                     }
                     if (Array.isArray(change.status) && change.status?.length) {
                         for (const status of change.status) {
-                            if (typeof status == "string") {
+                            if ([...creature.status].some((s) => s.id == status.id)) {
+                                if (status.hasAmount) {
+                                    // Update the amount for an existing status, remove if <= 0
+                                    if (status.amount > 0) {
+                                        creature.status.forEach((s) => {
+                                            s.amount = status.amount;
+                                        });
+                                    } else {
+                                        if (!Array.isArray(change.remove_status)) {
+                                            change.remove_status = [];
+                                        }
+                                        change.remove_status.push(status);
+                                    }
+                                }
+                            } else {
+                                if (typeof status == "string") {
                                 let cond = _settings.statuses.find(
                                     (c) => c.name == status
                                 ) ?? {
@@ -467,6 +510,18 @@ function createTracker() {
                             ) {
                                 creature.addCondition(status as Condition);
                             }
+                        }
+                    }
+                    if (Array.isArray(change.remove_status) && change.remove_status?.length) {
+                        for (const status of change.remove_status) {
+                            creature.status = new Set(
+                                [...creature.status].filter(
+                                    (s) => s.id != status.id
+                                )
+                            );
+                            _logger?.log(
+                                `${creature.name} relieved of status ${status.name}`
+                            );
                         }
                     }
                 }
@@ -495,7 +550,7 @@ function createTracker() {
             toAddString: string,
             statuses: Condition[],
             ac: string,
-            removeStatuses: Condition[] = []
+            remove_statuses: Condition[] = []
         ) =>
             updating.update((updatingCreatures) => {
                 const messages: UpdateLogMessage[] = [];
@@ -556,8 +611,8 @@ function createTracker() {
                             message.saved = true;
                         }
                     }
-                    if (removeStatuses.length) {
-                        change.remove_status = removeStatuses;
+                    if (remove_statuses.length) {
+                        change.remove_status = remove_statuses;
                     }
                     if (ac) {
                         if (ac.charAt(0) == "+" || ac.charAt(0) == "-") {
@@ -1215,12 +1270,32 @@ class Tracker {
             }
             if (change.status?.length) {
                 for (const status of change.status) {
-                    creature.addCondition(status);
+                    if ([...creature.status].some((s) => s.id == status.id)) {
+                        if (status.hasAmount) {
+                            // Update the amount for an existing status, remove if <= 0
+                            if (status.amount > 0) {
+                                creature.status.forEach((s) => {
+                                    s.amount = status.amount;
+                                });
+                            } else {
+                                if (!Array.isArray(change.remove_status)) {
+                                    change.remove_status = [];
+                                }
+                                change.remove_status.push(status);
+                            }
+                        }
+                    } else {
+                        creature.addCondition(status);
+                    }
                 }
             }
             if (change.remove_status?.length) {
                 for (const status of change.remove_status) {
-                    creature.removeCondition(status);
+                    creature.status = new Set(
+                        [...creature.status].filter(
+                            (s) => s.id != status.id
+                        )
+                    );
                     this.tryLog(
                         `${creature.name} relieved of status ${status.name}`
                     );
@@ -1266,7 +1341,7 @@ class Tracker {
         toAddString: string,
         statuses: Condition[],
         ac: string,
-        removeStatuses: Condition[]
+        remove_statuses: Condition[]
     ) {
         this.updating.update((updatingCreatures) => {
             const messages: UpdateLogMessage[] = [];
@@ -1327,9 +1402,9 @@ class Tracker {
                         message.saved = true;
                     }
                 }
-                if (removeStatuses.length) {
-                    message.remove_status = removeStatuses.map((s) => s.name);
-                    change.remove_status = removeStatuses;
+                if (remove_statuses.length) {
+                    message.remove_status = remove_statuses.map((s) => s.name);
+                    change.remove_status = remove_statuses;
                 }
                 if (ac) {
                     if (ac.charAt(0) == "+" || ac.charAt(0) == "-") {
