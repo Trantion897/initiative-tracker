@@ -259,6 +259,8 @@ function createTracker() {
             }
             if (change.status?.length) {
                 for (const status of change.status) {
+                    creature.addCondition(status);
+                    // TODO: Remove/move
                     if ([...creature.status].some((s) => s.id == status.id)) {
                         if (status.hasAmount) {
                             // Update the amount for an existing status, remove if <= 0
@@ -281,11 +283,13 @@ function createTracker() {
                     } else {
                         creature.addCondition(status);
                     }
+                    // TODO: End remove
                 }
             }
             if (change.remove_status?.length) {
                 for (const status of change.remove_status) {
                     creature.removeCondition(status);
+                    // TODO: Remove/move? - check
                 }
             }
             if (change.remove_status?.length) {
@@ -298,6 +302,7 @@ function createTracker() {
                     _logger?.log(
                         `${creature.name} relieved of status ${status.name}`
                     );
+                    // TODO: End remove
                 }
             }
             if ("hidden" in change) {
@@ -485,6 +490,20 @@ function createTracker() {
                     }
                     if (Array.isArray(change.status) && change.status?.length) {
                         for (const status of change.status) {
+                            let cond;
+                            if (typeof status == "string") {
+                                cond = _settings.statuses.find(
+                                    (c) => c.name == status
+                                ) ?? {
+                                    name: status,
+                                    description: "",
+                                    id: getId()
+                                };
+                            } else {
+                                cond = status as Condition;
+                            }
+                            creature.addCondition(cond);
+                            // TODO: Move/remove
                             if ([...creature.status].some((s) => s.id == status.id)) {
                                 if (status.hasAmount) {
                                     // Update the amount for an existing status, remove if <= 0
@@ -506,20 +525,22 @@ function createTracker() {
                                 }
                             } else {
                                 if (typeof status == "string") {
-                                let cond = _settings.statuses.find(
-                                    (c) => c.name == status
-                                ) ?? {
-                                    name: status,
-                                    description: "",
-                                    id: getId()
-                                };
-                                creature.addCondition(cond);
-                            } else if (
-                                typeof status == "object" &&
-                                status.name?.length
-                            ) {
-                                creature.addCondition(status as Condition);
+                                    let cond = _settings.statuses.find(
+                                        (c) => c.name == status
+                                    ) ?? {
+                                        name: status,
+                                        description: "",
+                                        id: getId()
+                                    };
+                                    creature.addCondition(cond);
+                                } else if (
+                                    typeof status == "object" &&
+                                    status.name?.length
+                                ) {
+                                    creature.addCondition(status as Condition);
+                                }
                             }
+                            // TODO: End move/remove
                         }
                     }
                     if (Array.isArray(change.remove_status) && change.remove_status?.length) {
@@ -614,6 +635,7 @@ function createTracker() {
                         }
                     }
                     if (statuses.length) {
+                        // TODO: Add status with value
                         message.status = statuses.map((s) => {
                             if (s.hasAmount)
                                 return `${s.name} (${s.amount})`;
@@ -1285,6 +1307,8 @@ class Tracker {
             }
             if (change.status?.length) {
                 for (const status of change.status) {
+                    creature.addCondition(status);
+                    // TODO: Move/remove
                     if ([...creature.status].some((s) => s.id == status.id)) {
                         if (status.hasAmount) {
                             // Update the amount for an existing status, remove if <= 0
@@ -1294,7 +1318,7 @@ class Tracker {
                                         s.amount = status.amount;
                                     }
                                 });
-                                _logger?.log(
+                                this.tryLog(
                                     `${creature.name} status ${status.name} set to ${status.amount}`
                                 );
                             } else {
@@ -1307,6 +1331,7 @@ class Tracker {
                     } else {
                         creature.addCondition(status);
                     }
+                    // TODO: End move/remove
                 }
             }
             if (change.remove_status?.length) {

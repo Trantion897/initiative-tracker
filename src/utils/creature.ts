@@ -59,6 +59,7 @@ export class Creature {
         this.modifier = this.modifier ?? 0;
     }
     addCondition(condition: Condition) {
+        // TODO: Change to setCondition and handle condition values
         if (![...this.status].find(cond => cond.name === condition.name && cond.amount === condition.amount)) {
             this.status.add(condition);
         }
