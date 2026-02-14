@@ -17,6 +17,11 @@
         duration: 400,
         easing: cubicOut
     });
+
+    const difficultyBarLevels = {
+        low: 0.33,
+        high: 0.66
+    }
     
     $: {
         if ($dif.thresholds.last().minValue > 0) {
@@ -27,6 +32,25 @@
                 )
             );
         }
+
+        // Set low & high thresholds on meter (causes colour change)
+        // Low: first non-zero XP budget
+        // High: Second-highest XP budget (highest is off the chart)
+        // If both are equal, only set one.
+        if ($dif.thresholds.length > 2) {
+            difficultyBarLevels.high = $dif.thresholds[$dif.thresholds.length - 2].minValue / $dif.thresholds.last().minValue;
+        }
+        for(const threshold of $dif.thresholds) {
+            if (threshold.minValue / $dif.thresholds.last().minValue >= difficultyBarLevels.high) {
+                break;
+            }
+
+            if (threshold.minValue > 0) {
+                difficultyBarLevels.low = threshold.minValue / $dif.thresholds.last().minValue;
+                break;
+            }
+        }
+
     }
     $: summary = $dif.difficulty.summary;
 </script>
@@ -36,8 +60,8 @@
         ><meter
             class="difficulty-bar"
             min="0"
-            low="0.33"
-            high="0.66"
+            low="{difficultyBarLevels.low}"
+            high="{difficultyBarLevels.high}"
             optimum="0"
             value={$difficultyBar}
         />
