@@ -32,7 +32,6 @@
 </script>
 
 <div class="difficulty-bar-container" aria-label={summary}>
-    <span>{$dif.labels?.[0] ?? ""}</span>
     <span
         ><meter
             class="difficulty-bar"
@@ -51,13 +50,13 @@
         </ol>
     
     </span>
-    <span>{$dif.labels?.last() ?? ""}</span>
+    <span>{$dif.difficulty.displayName ?? ""}</span>
 </div>
 
 <style>
     .difficulty-bar-container {
         display: grid;
-        grid-template-columns: auto 1fr auto;
+        grid-template-columns: 1fr auto;
         gap: 0.5rem;
         align-items: start;
         padding: 0 0.5rem;
