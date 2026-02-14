@@ -17,11 +17,7 @@
         duration: 400,
         easing: cubicOut
     });
-
-    // const difficultyLabels = /
-
-    // $var = access store
-    // $: = reactive statement
+    
     $: {
         if ($dif.thresholds.last().minValue > 0) {
             difficultyBar.set(
@@ -48,7 +44,9 @@
         />
         <ol class="thresholds">
             {#each $dif.thresholds as level}
-                <li style="left:{level.minValue / $dif.thresholds.last().minValue * 100}%"><span>{level.displayName}</span></li>
+                <li style="left:calc({level.minValue / $dif.thresholds.last().minValue * 100}% - 1px)">
+                    <span>{level.displayName}</span>
+                </li>
             {/each}
         </ol>
     
@@ -63,13 +61,11 @@
         gap: 0.5rem;
         align-items: start;
         padding: 0 0.5rem;
-        margin-bottom: 0.5rem;
         width: 100%;
     }
     .difficulty-bar {
         width: 100%;
-        border: 1px solid #ccc;
-        border-radius: 3px;
+        border:none;
     }
 
     .difficulty-bar-container .thresholds {
@@ -77,7 +73,8 @@
         margin:0;
         padding:0;
         position:relative;
-        height:25px;
+        height:2rem;
+        top:-5px;
     }
 
     .difficulty-bar-container .thresholds li {
@@ -85,16 +82,16 @@
         border-left:1px solid #ccc;
         position:absolute;
         width:0px;
-        height:5px;
+        height:0.35rem
     }
 
     .difficulty-bar-container .thresholds li span {
         font-size:x-small;
         position:relative;
-        top: 5px;
+        top: 0.3rem;
         text-align:center;
         display:inline-block;
-        width:100px;
-        left:-50px;
+        width:10em;
+        left:-5em;
     }
 </style>
