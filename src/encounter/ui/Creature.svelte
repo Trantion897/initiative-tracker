@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { setIcon } from "obsidian";
+    import { BaseComponent, ButtonComponent, ExtraButtonComponent, setIcon, TextComponent } from "obsidian";
     import type InitiativeTracker from "src/main";
-    import { FRIENDLY, HIDDEN, RANDOM_HP, getRpgSystem } from "src/utils";
+    import { ReasonNoXp, type CreatureDifficulty } from "src/types/creatures";
+    import { FRIENDLY, HIDDEN, INFO_ICON, INFO_VIEW, RANDOM_HP, getRpgSystem } from "src/utils";
     import type { Creature } from "src/utils/creature";
     import { getContext } from "svelte";
 
@@ -10,7 +11,7 @@
 
     export let creature: Creature;
     export let count: string | number;
-    export let xp: number;
+    export let difficulty: CreatureDifficulty;
     export let shouldShowRoll: boolean;
 
     const rollEl = (node: HTMLElement) => {
@@ -21,6 +22,20 @@
     };
     const hidden = (node: HTMLElement) => {
         setIcon(node, HIDDEN);
+    };
+
+    const reasonNoXpDisplayLabel:Record<number, string> = Object.fromEntries(
+        new Map([
+            [ReasonNoXp.DEFINED_AS_ZERO, "The XP for this creature is set to 0"],
+            [ReasonNoXp.INVALID_DIFFICULTY, "The calculated difficulty is invalid"],
+            [ReasonNoXp.NOT_IN_BESTIARY, "Creature not found in definition or in bestiary"],
+            [ReasonNoXp.TOO_EASY, "This creature is too easy to grant any XP"],
+            [ReasonNoXp.TOO_HARD, "This creature is too hard to define any XP"]
+        ])
+    );
+
+    const noXpInfo = (node: HTMLElement) => {
+
     };
 </script>
 
@@ -42,16 +57,23 @@
             <span class="has-icon" aria-label="Rolling for HP" use:rollEl />
         {/if}
     </span>
-    {#if xp}
+    {#if difficulty.xp}
         <span class="xp-parent">
             <span class="paren left">&nbsp;(</span>
             <span class="xp-container">
                 <span class="xp number"
-                    >{rpgSystem.formatDifficultyValue(xp)}</span
+                    >{rpgSystem.formatDifficultyValue(difficulty.xp)}</span
                 >
                 <span class="xp text">{rpgSystem.valueUnit}</span>
             </span>
             <span class="paren right">)</span>
+        </span>
+    {:else}
+        <span 
+            class="no-xp-info"
+            aria-label="{reasonNoXpDisplayLabel[difficulty.reason_no_xp]}"
+        >
+        {@html INFO_ICON}
         </span>
     {/if}
 </div>
@@ -76,5 +98,14 @@
     }
     .xp-parent {
         display: inline-flex;
+    }
+    .no-xp-info {
+        color: var(--icon-color);
+        cursor: default;
+        margin-left: 0.5em;
+    }
+    .no-xp-info :global(svg) {
+        width:1em;
+        vertical-align: bottom;
     }
 </style>

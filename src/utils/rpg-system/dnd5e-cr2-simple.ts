@@ -2,6 +2,7 @@ import { RpgSystem } from "./rpgSystem";
 import { crToString, getFromCreatureOrBestiary } from "..";
 import type InitiativeTracker from "src/main";
 import type { DifficultyLevel, GenericCreature, DifficultyThreshold } from ".";
+import { ReasonNoXp, type CreatureDifficulty } from "src/types/creatures";
 
 const PLAYER_POWER_BY_LEVEL: Record<number, number> = {
   1: 11,
@@ -92,9 +93,16 @@ export class Dnd5eCr2SimpleRpgSystem extends RpgSystem {
     this.displayName = "DnD 5e CR2.0 Simple";
   }
 
-  getCreatureDifficulty(creature: GenericCreature, _?: number[]): number {
+  getCreatureDifficulty(creature: GenericCreature, _?: number[]): CreatureDifficulty {
     const cr = getFromCreatureOrBestiary(this.plugin, creature, c => c?.cr ?? "0");
-    return POWER_BY_CR[cr] ?? 0;
+    if (cr == null || cr == undefined) {
+      return {xp: 0, reason_no_xp:ReasonNoXp.NOT_IN_BESTIARY}
+    }
+
+    if (POWER_BY_CR[cr]) {
+      return {xp: POWER_BY_CR[cr]}
+    }
+    return {xp: 0, reason_no_xp:ReasonNoXp.INVALID_DIFFICULTY}
   }
 
   getAdditionalCreatureDifficultyStats(
@@ -110,7 +118,7 @@ export class Dnd5eCr2SimpleRpgSystem extends RpgSystem {
     creatures: Map<GenericCreature, number>,
     playerLevels: number[]
   ) : DifficultyLevel {
-    const creaturePower = [...creatures].reduce((acc, [creature, count]) => acc + this.getCreatureDifficulty(creature) * count, 0)
+    const creaturePower = [...creatures].reduce((acc, [creature, count]) => acc + this.getCreatureDifficulty(creature).xp * count, 0)
 
     const thresholds = this.getDifficultyThresholds(playerLevels);
     const displayName = thresholds

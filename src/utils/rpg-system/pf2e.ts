@@ -2,6 +2,7 @@ import { RpgSystem } from "./rpgSystem";
 import { crToString, getFromCreatureOrBestiary } from "..";
 import type { DifficultyLevel, GenericCreature, DifficultyThreshold } from ".";
 import type InitiativeTracker from "../../main";
+import { ReasonNoXp, type CreatureDifficulty } from "src/types/creatures";
 
 // level without proficiency variant
 // const xpVariantCreatureDifferences = new Map([
@@ -22,7 +23,8 @@ import type InitiativeTracker from "../../main";
 //   [7, 160],
 // ]);
 
-const XP_CREATURE_DIFFERENCES: Record<string, number> = {
+// Typescript coerces these string properties to numbers. JS doesn't support negative number keys
+const XP_CREATURE_DIFFERENCES: Record<number, number> = {
     "-4": 10,
     "-3": 15,
     "-2": 20,
@@ -34,7 +36,7 @@ const XP_CREATURE_DIFFERENCES: Record<string, number> = {
     "4": 160
 };
 
-const XP_SIMPLE_HAZARD_DIFFERENCES: Record<string, number> = {
+const XP_SIMPLE_HAZARD_DIFFERENCES: Record<number, number> = {
     "-4": 2,
     "-3": 3,
     "-2": 4,
@@ -74,7 +76,7 @@ export class Pathfinder2eRpgSystem extends RpgSystem {
     getCreatureDifficulty(
         creature: GenericCreature,
         playerLevels?: number[]
-    ): number {
+    ): CreatureDifficulty {
         const lvl = getFromCreatureOrBestiary(
             this.plugin,
             creature,
@@ -83,16 +85,26 @@ export class Pathfinder2eRpgSystem extends RpgSystem {
             ?.toString()
             .split(" ")
             .slice(-1);
-        if (lvl == null || lvl == undefined) return 0;
+        if (lvl == null || lvl == undefined) return {xp: 0, reason_no_xp:ReasonNoXp.NOT_IN_BESTIARY};
         const partyLvl = Math.round(
             playerLevels?.length ?? 0 > 0
                 ? playerLevels.reduce((a, b) => a + b) / playerLevels.length
                 : 0
         );
 
-        const creature_differences = String(lvl - partyLvl);
+        const creature_differences = lvl - partyLvl;
+        const allowed_differences = Object.keys(XP_CREATURE_DIFFERENCES).map((x) => parseInt(x));
+        allowed_differences.sort();
 
-        return XP_CREATURE_DIFFERENCES[creature_differences] ?? 0;
+        if (Object.hasOwn(XP_CREATURE_DIFFERENCES, creature_differences)) {
+            return {xp: XP_CREATURE_DIFFERENCES[creature_differences]};
+        } else if (creature_differences < allowed_differences[0]) {
+            return {xp: 0, reason_no_xp: ReasonNoXp.TOO_EASY}
+        } else if (creature_differences > allowed_differences[allowed_differences.length-1]) {
+            return {xp: 0, reason_no_xp: ReasonNoXp.TOO_HARD}
+        } else {
+            return {xp: 0, reason_no_xp: ReasonNoXp.INVALID_DIFFICULTY}
+        }
     }
 
     getDifficultyThresholds(playerLevels: number[]): DifficultyThreshold[] {
@@ -119,7 +131,7 @@ export class Pathfinder2eRpgSystem extends RpgSystem {
         const creatureXp = [...creatures].reduce(
             (acc, [creature, count]) =>
                 acc +
-                this.getCreatureDifficulty(creature, playerLevels) * count,
+                this.getCreatureDifficulty(creature, playerLevels).xp * count,
             0
         );
         const thresholds = this.getDifficultyThresholds(playerLevels);

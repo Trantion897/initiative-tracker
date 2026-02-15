@@ -208,7 +208,7 @@
                             >
                                 <CreatureComponent
                                     {creature}
-                                    xp={rpgSystem.getCreatureDifficulty(
+                                    difficulty={rpgSystem.getCreatureDifficulty(
                                         creature,
                                         playerLevels
                                     )}

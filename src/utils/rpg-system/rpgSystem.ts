@@ -1,3 +1,4 @@
+import type { CreatureDifficulty } from "src/types/creatures";
 import { DEFAULT_UNDEFINED } from "../constants";
 import type { GenericCreature, DifficultyLevel, DifficultyThreshold } from "./index";
 
@@ -14,8 +15,8 @@ export abstract class RpgSystem {
   getCreatureDifficulty(
     creature: GenericCreature,
     playerLevels: number[]
-  ): number {
-    return 0;
+  ): CreatureDifficulty {
+    return {xp: 0};
   }
 
   /** Returns additional information related to the difficulty of a creature relative to the given players. */

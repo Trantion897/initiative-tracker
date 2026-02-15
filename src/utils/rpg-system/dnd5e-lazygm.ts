@@ -8,6 +8,7 @@ import {
 } from "src/utils";
 import { RpgSystem } from "./rpgSystem";
 import { Dnd5eRpgSystem } from "./dnd5e";
+import { ReasonNoXp, type CreatureDifficulty } from "src/types/creatures";
 
 export class Dnd5eLazyGmRpgSystem extends RpgSystem {
     plugin: InitiativeTracker;
@@ -26,18 +27,28 @@ export class Dnd5eLazyGmRpgSystem extends RpgSystem {
         this.dnd5eRpgSystem = new Dnd5eRpgSystem(plugin);
     }
 
-    getCreatureDifficulty(creature: GenericCreature, _?: number[]): number {
-        return convertFraction(
-            getFromCreatureOrBestiary(this.plugin, creature, (c) => c?.cr ?? 0)
-        );
+    getCreatureDifficulty(creature: GenericCreature, _?: number[]): CreatureDifficulty {
+        const bestiary_creature = getFromCreatureOrBestiary(this.plugin, creature, (c) => c?.cr ?? 0);
+
+        if (bestiary_creature == null || bestiary_creature == undefined) {
+            return {xp: 0, reason_no_xp:ReasonNoXp.NOT_IN_BESTIARY}
+        }
+
+        const xp = convertFraction(bestiary_creature);
+
+        if (xp == 0) {
+            return {xp: 0, reason_no_xp:ReasonNoXp.INVALID_DIFFICULTY}
+        }
+        
+        return {xp: xp}
     }
 
     getAdditionalCreatureDifficultyStats(
         creature: GenericCreature,
         _?: number[]
     ): string[] {
-        const xp = this.dnd5eRpgSystem.getCreatureDifficulty(creature);
-        return [this.dnd5eRpgSystem.formatDifficultyValue(xp, true)];
+        const difficulty = this.dnd5eRpgSystem.getCreatureDifficulty(creature);
+        return [this.dnd5eRpgSystem.formatDifficultyValue(difficulty.xp, true)];
     }
 
     getDifficultyThresholds(playerLevels: number[]): DifficultyThreshold[] {
@@ -58,7 +69,7 @@ export class Dnd5eLazyGmRpgSystem extends RpgSystem {
     ): DifficultyLevel {
         const crSum = [...creatures].reduce(
             (acc, [creature, count]) =>
-                acc + this.getCreatureDifficulty(creature) * count,
+                acc + this.getCreatureDifficulty(creature).xp * count,
             0
         );
         const deadlyThreshold =
@@ -67,7 +78,7 @@ export class Dnd5eLazyGmRpgSystem extends RpgSystem {
         const xp = [...creatures].reduce(
             (acc, [creature, count]) =>
                 acc +
-                this.dnd5eRpgSystem.getCreatureDifficulty(creature) * count,
+                this.dnd5eRpgSystem.getCreatureDifficulty(creature).xp * count,
             0
         );
 

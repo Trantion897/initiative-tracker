@@ -2,6 +2,7 @@ import { RpgSystem } from "./rpgSystem";
 import { DEFAULT_UNDEFINED, convertFraction, crToString, getFromCreatureOrBestiary } from "..";
 import type InitiativeTracker from "src/main";
 import type { DifficultyLevel, GenericCreature, DifficultyThreshold } from ".";
+import { ReasonNoXp, type CreatureDifficulty } from "src/types/creatures";
 
 const ENCOUNTER_CR_PER_CHARACTER: {
   [avgCharacterLevel: number]: { easy: number, standard: number, hard: number, cap: number };
@@ -145,8 +146,9 @@ export class Dnd5eFleeMortalsRpgSystem extends RpgSystem {
     }
   }
 
-  getCreatureDifficulty(creature: GenericCreature, _?: number[]): number {
-    if (this.isMinion(creature)) return 0;
+  // TODO: Can we set the reason to explain that minions have 0 XP?
+  getCreatureDifficulty(creature: GenericCreature, _?: number[]): CreatureDifficulty {
+    if (this.isMinion(creature)) return {xp:0, reason_no_xp:ReasonNoXp.DEFINED_AS_ZERO};
 
     const cr = getFromCreatureOrBestiary(
       this.plugin,
@@ -154,7 +156,17 @@ export class Dnd5eFleeMortalsRpgSystem extends RpgSystem {
       (c) => c?.cr ?? "0"
     );
 
-    return convertFraction(cr);
+    if (cr == null || cr == undefined) {
+      return {xp: 0, reason_no_xp:ReasonNoXp.NOT_IN_BESTIARY}
+    }
+
+    const xp = convertFraction(cr);
+
+        if (xp == 0) {
+            return {xp: 0, reason_no_xp:ReasonNoXp.INVALID_DIFFICULTY}
+        }
+        
+        return {xp: xp}
   }
 
   getEncounterDifficulty(

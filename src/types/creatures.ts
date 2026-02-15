@@ -65,3 +65,14 @@ export type Condition = {
       }
     | {}
 );
+export const ReasonNoXp = {
+    DEFINED_AS_ZERO: 0,
+    NOT_IN_BESTIARY: 1,
+    TOO_EASY: 2,
+    TOO_HARD: 4,
+    INVALID_DIFFICULTY: 8
+}
+export type CreatureDifficulty = {
+    xp: number,
+    reason_no_xp?: number
+};
