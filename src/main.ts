@@ -245,6 +245,11 @@ export default class InitiativeTracker extends Plugin {
             (leaf: WorkspaceLeaf) => new BuilderView(leaf, this)
         );
 
+        this.registerHoverLinkSource(INITIATIVE_TRACKER_VIEW, {
+            display: "Initiative Tracker",
+            defaultMod: false
+        });
+
         this.addCommands();
         this.addEvents();
 

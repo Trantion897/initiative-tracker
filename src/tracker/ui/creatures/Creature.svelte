@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { DEFAULT_UNDEFINED, FRIENDLY, HIDDEN } from "src/utils";
+    import { DEFAULT_UNDEFINED, FRIENDLY, HIDDEN, INITIATIVE_TRACKER_VIEW } from "src/utils";
     import type { Creature } from "src/utils/creature";
     import Initiative from "./Initiative.svelte";
     import CreatureControls from "./CreatureControls.svelte";
@@ -23,6 +23,7 @@
         setIcon(div, FRIENDLY);
     };
 
+    const hoverParent: { hoverPopover: null } = { hoverPopover: null };
     let hoverTimeout: NodeJS.Timeout = null;
     const tryHover = (evt: MouseEvent) => {
         hoverTimeout = setTimeout(() => {
@@ -36,13 +37,13 @@
                     [, link] = link.match(/\[\[(.+?)(?:\|.+?)?\]\]/);
                 }
 
-                app.workspace.trigger(
-                    "link-hover",
-                    {}, //hover popover, but don't need
-                    evt.target, //targetEl
-                    link, //linkText
-                    "initiative-tracker " //source
-                );
+                app.workspace.trigger("hover-link", {
+                    event: evt,
+                    source: INITIATIVE_TRACKER_VIEW,
+                    hoverParent,
+                    targetEl: evt.target as HTMLElement,
+                    linktext: link
+                });
             }
         }, 1000);
     };
