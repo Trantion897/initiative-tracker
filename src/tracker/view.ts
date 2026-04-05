@@ -93,6 +93,9 @@ export default class TrackerView extends ItemView {
 export class CreatureView extends ItemView {
     buttonEl = this.contentEl.createDiv("creature-view-button");
     statblockEl = this.contentEl.createDiv("creature-statblock-container");
+    private currentCreatureId: string | null = null;
+    private currentCreatureName: string | null = null;
+    private bestiaryUnload: (() => void) | null = null;
     constructor(leaf: WorkspaceLeaf, public plugin: InitiativeTracker) {
         super(leaf);
         this.load();
@@ -131,9 +134,95 @@ export class CreatureView extends ItemView {
             });
     }
     onunload(): void {
+        if (this.bestiaryUnload) {
+            this.bestiaryUnload();
+            this.bestiaryUnload = null;
+        }
         this.app.workspace.trigger("initiative-tracker:stop-viewing");
     }
+    getState(): Record<string, unknown> {
+        return {
+            creatureId: this.currentCreatureId,
+            creatureName: this.currentCreatureName
+        };
+    }
+    async setState(
+        state: Record<string, unknown>,
+        result: import("obsidian").ViewStateResult
+    ): Promise<void> {
+        const id =
+            typeof state?.creatureId === "string" ? state.creatureId : null;
+        const name =
+            typeof state?.creatureName === "string"
+                ? state.creatureName
+                : null;
+        if (!id && !name) {
+            this.currentCreatureId = null;
+            this.currentCreatureName = null;
+            await this.render();
+            await super.setState(state, result);
+            return;
+        }
+
+        this.currentCreatureId = id;
+        this.currentCreatureName = name;
+        const tryRestore = async () => {
+            const ordered = this.plugin.tracker.getOrderedCreatures();
+            const creature =
+                (id
+                    ? ordered.find((c) => c.id === id)
+                    : undefined) ??
+                (name
+                    ? ordered.find((c) => c.name === name)
+                    : undefined) ??
+                (name
+                    ? this.plugin.playerCreatures.get(name)
+                    : undefined) ??
+                (name
+                    ? this.plugin.getCreatureFromBestiary(name)
+                    : undefined);
+
+            if (creature) {
+                try {
+                    await this.render(creature);
+                } catch (error) {
+                    console.error(
+                        "Failed to restore creature view",
+                        error
+                    );
+                }
+                return;
+            }
+
+            this.currentCreatureId = null;
+            this.currentCreatureName = null;
+            state.creatureId = null;
+            state.creatureName = null;
+            await this.render();
+        };
+
+        if (
+            this.plugin.canUseStatBlocks &&
+            !window["FantasyStatblocks"].isResolved()
+        ) {
+            this.statblockEl.empty();
+            this.statblockEl.createEl("em", {
+                text: "Loading bestiary\u2026"
+            });
+            const unload = window["FantasyStatblocks"].onResolved(() => {
+                this.bestiaryUnload = null;
+                void tryRestore().finally(unload);
+            });
+            this.bestiaryUnload = unload;
+        } else {
+            await tryRestore();
+        }
+
+        await super.setState(state, result);
+    }
     async render(creature?: Creature) {
+        this.currentCreatureId = creature?.id ?? null;
+        this.currentCreatureName = creature?.name ?? null;
         this.statblockEl.empty();
         if (!creature) {
             this.statblockEl.createEl("em", {
