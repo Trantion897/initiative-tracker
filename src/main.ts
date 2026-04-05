@@ -567,7 +567,7 @@ export default class InitiativeTracker extends Plugin {
             )
         );
         this.registerEvent(
-            app.workspace.on(
+            this.app.workspace.on(
                 "initiative-tracker:save-state",
                 async (state: InitiativeViewState) => {
                     this.data.state = state;
@@ -618,19 +618,22 @@ export default class InitiativeTracker extends Plugin {
 
     async onunload() {
         await this.saveSettings();
+
+        this.app.workspace.detachLeavesOfType(INITIATIVE_TRACKER_VIEW);
+        this.app.workspace.detachLeavesOfType(PLAYER_VIEW_VIEW);
+        this.app.workspace.detachLeavesOfType(CREATURE_TRACKER_VIEW);
+        this.app.workspace.detachLeavesOfType(BUILDER_VIEW);
+
         this.app.workspace.trigger("initiative-tracker:unloaded");
         console.log("Initiative Tracker unloaded");
     }
 
     async addTrackerView() {
-        if (
-            this.app.workspace.getLeavesOfType(INITIATIVE_TRACKER_VIEW)?.length
-        ) {
-            return;
-        }
-        await this.app.workspace.getRightLeaf(false).setViewState({
-            type: INITIATIVE_TRACKER_VIEW
-        });
+        await this.app.workspace.ensureSideLeaf(
+            INITIATIVE_TRACKER_VIEW,
+            "right",
+            { active: false }
+        );
     }
     get builder() {
         const leaves = this.app.workspace.getLeavesOfType(BUILDER_VIEW);
@@ -721,12 +724,12 @@ export default class InitiativeTracker extends Plugin {
     }
     async openCombatant(creature: Creature) {
         if (!this.canUseStatBlocks) return;
-        const view = this.combatant;
-        if (!view) {
-            const leaf = this.app.workspace.getRightLeaf(true);
-            await leaf.setViewState({
-                type: CREATURE_TRACKER_VIEW
-            });
+        if (!this.combatant) {
+            await this.app.workspace.ensureSideLeaf(
+                CREATURE_TRACKER_VIEW,
+                "right",
+                { active: true }
+            );
         }
 
         await this.combatant.render(creature);

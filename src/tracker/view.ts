@@ -39,6 +39,9 @@ export default class TrackerView extends ItemView {
         });
         this.ui.$on("player-view", () => this.openPlayerView());
     }
+    async onClose() {
+        this.ui?.$destroy();
+    }
     getViewType() {
         return INITIATIVE_TRACKER_VIEW;
     }
@@ -99,7 +102,7 @@ export class CreatureView extends ItemView {
             "a.internal-link",
             debounce(
                 (ev) =>
-                    app.workspace.trigger("hover-link", {
+                    this.app.workspace.trigger("hover-link", {
                         event: ev,
                         source: INITIATIVE_TRACKER_VIEW,
                         hoverParent: this,
@@ -112,7 +115,7 @@ export class CreatureView extends ItemView {
             )
         );
         this.containerEl.on("click", "a.internal-link", (ev) =>
-            app.workspace.openLinkText(
+            this.app.workspace.openLinkText(
                 (ev.target as HTMLAnchorElement).dataset.href,
                 "initiative-tracker"
             )
@@ -182,7 +185,7 @@ export class CreatureView extends ItemView {
         if (file) {
             const fileContent = await this.app.vault.cachedRead(file);
             if (subpath && fileContent) {
-                const cache = app.metadataCache.getFileCache(file);
+                const cache = this.app.metadataCache.getFileCache(file);
                 const subpathResult = resolveSubpath(cache, subpath);
                 if (subpathResult) {
                     content = fileContent.slice(
